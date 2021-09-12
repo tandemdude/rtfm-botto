@@ -1,0 +1,7 @@
+version: '3'
+
+services:
+  rtfm-bot:
+    build:
+      context: .
+    restart: always
