@@ -6,11 +6,11 @@ import zlib
 import io
 import os
 import aiohttp
-from ext.utils import fuzzy
+from rapidfuzz import fuzz
+from rapidfuzz import process
 
 
 class SphinxObjectFileReader:
-    # Inspired by Sphinx's InventoryFileReader
     BUFSIZE = 16 * 1024
 
     def __init__(self, buffer):
@@ -43,6 +43,11 @@ class SphinxObjectFileReader:
 
 
 class RTFMManager:
+    def __init__(self, slug, url):
+        self._slug = slug
+        self._url = url
+        self._rtfm_cache = {}
+
     def purge_cache(self):
         del self._rtfm_cache
 
@@ -93,50 +98,36 @@ class RTFMManager:
             key = name if dispname == "-" else dispname
             prefix = f"{subdirective}:" if domain == "std" else ""
 
-            result[f"{prefix}{key}"] = os.path.join(url, location)
+            remove_pref = f"{prefix}{key}".startswith(self._slug + ".")
+            result[f"{prefix}{key}"[len(self._slug + ".") if remove_pref else 0:]] = os.path.join(url, location)
 
         return result
 
-    async def build_rtfm_lookup_table(self, page_types):
-        cache = {}
-        for key, page in page_types.items():
-            sub = cache[key] = {}
-            async with aiohttp.ClientSession() as session:
-                async with session.get(page + "/objects.inv") as resp:
-                    if resp.status != 200:
-                        raise RuntimeError(
-                            "Cannot build rtfm lookup table, try again later."
-                        )
+    async def build_rtfm_lookup_table(self, url):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url + "/objects.inv") as resp:
+                if resp.status != 200:
+                    raise RuntimeError(
+                        "Cannot build rtfm lookup table, try again later."
+                    )
 
-                    stream = SphinxObjectFileReader(await resp.read())
-                    cache[key] = self.parse_object_inv(stream, page)
+                stream = SphinxObjectFileReader(await resp.read())
+                cache = self.parse_object_inv(stream, url)
 
         self._rtfm_cache = cache
 
-    async def do_rtfm(self, key: str, obj: str) -> typing.Union[str, hikari.Embed]:
-        page_types = {
-            "py": "https://docs.python.org/3",
-            "dpy": "https://discordpy.readthedocs.io/en/latest",
-            "hikari": "https://hikari-py.github.io/hikari",
-            "lightbulb": "https://hikari-lightbulb.readthedocs.io/en/latest",
-        }
-
+    async def do_rtfm(self, obj: str) -> typing.Union[str, hikari.Embed]:
         if obj is None:
-            return page_types[key]
+            return self._url
 
-        if not hasattr(self, "_rtfm_cache"):
-            await self.build_rtfm_lookup_table(page_types)
+        if not self._rtfm_cache:
+            await self.build_rtfm_lookup_table(self._url)
 
-        cache = list(self._rtfm_cache[key].items())
-
-        matches = fuzzy.finder(obj, cache, key=lambda t: t[0], lazy=False)[:8]
+        matches = process.extract(obj, self._rtfm_cache.keys(), scorer=fuzz.QRatio, limit=10)
 
         e = hikari.Embed(colour=0x39393F)
         if len(matches) == 0:
             return "Could not find anything. Sorry."
 
-        e.description = "\n".join(f"[`{key}`]({url})" for key, url in matches)
+        e.description = "\n".join(f"[`{key}`]({self._rtfm_cache[key]})" for key, _, __ in matches)
         return e
-
-
-manager = RTFMManager()
