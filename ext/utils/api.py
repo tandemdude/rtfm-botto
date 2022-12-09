@@ -99,7 +99,9 @@ class RTFMManager:
             prefix = f"{subdirective}:" if domain == "std" else ""
 
             remove_pref = f"{prefix}{key}".startswith(self._slug + ".")
-            result[f"{prefix}{key}"[len(self._slug + ".") if remove_pref else 0:]] = os.path.join(url, location)
+            result[
+                f"{prefix}{key}"[len(self._slug + ".") if remove_pref else 0 :]
+            ] = os.path.join(url, location)
 
         return result
 
@@ -123,11 +125,15 @@ class RTFMManager:
         if not self._rtfm_cache:
             await self.build_rtfm_lookup_table(self._url)
 
-        matches = process.extract(obj, self._rtfm_cache.keys(), scorer=fuzz.QRatio, limit=10)
+        matches = process.extract(
+            obj, self._rtfm_cache.keys(), scorer=fuzz.QRatio, limit=10
+        )
 
         e = hikari.Embed(colour=0x39393F)
         if len(matches) == 0:
             return "Could not find anything. Sorry."
 
-        e.description = "\n".join(f"[`{key}`]({self._rtfm_cache[key]})" for key, _, __ in matches)
+        e.description = "\n".join(
+            f"[`{key}`]({self._rtfm_cache[key]})" for key, _, __ in matches
+        )
         return e
