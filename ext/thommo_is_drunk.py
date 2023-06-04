@@ -9,7 +9,7 @@ plugin = lightbulb.Plugin("drunk")
 
 
 async def unmute_task(bot: lightbulb.BotApp, user_id: hikari.Snowflake):
-    await asyncio.sleep(20)
+    await asyncio.sleep(60 * 60 * 8)
     await bot.rest.add_role_to_member(HIKARI_GUILD_ID, user_id, HIKARI_STAFF_ROLE_ID, reason="Thommo is probably not drunk anymore")
 
 
