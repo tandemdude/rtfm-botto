@@ -6,7 +6,7 @@ logging.getLogger("lightbulb").setLevel(logging.DEBUG)
 _LOGGER = logging.getLogger("rtfm_bot")
 
 # List of all extensions to be loaded
-extensions = ["ext.rtfm_commands"]
+extensions = ["ext.rtfm_commands", "ext.thommo_is_drunk"]
 
 # Declares the bot prefix and token, taking values from files
 prefix = "rtfm "
