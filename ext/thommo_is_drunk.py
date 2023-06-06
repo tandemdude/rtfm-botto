@@ -5,10 +5,11 @@ import lightbulb
 
 HIKARI_STAFF_ROLE_ID = 734164204679856290
 HIKARI_GUILD_ID = 574921006817476608
+THOMMO_ID = 215061635574792192
 plugin = lightbulb.Plugin("drunk")
 
 
-async def unmute_task(bot: lightbulb.BotApp, user_id: hikari.Snowflake):
+async def unmute_task(bot: lightbulb.BotApp, user_id: hikari.Snowflakeish):
     await asyncio.sleep(60 * 60 * 8)
     await bot.rest.add_role_to_member(HIKARI_GUILD_ID, user_id, HIKARI_STAFF_ROLE_ID, reason="Thommo is probably not drunk anymore")
 
@@ -47,9 +48,9 @@ async def thommo_is_drunk(ctx: lightbulb.Context):
         return
 
     if event.interaction.custom_id == "drunk-confirm":
-        await ctx.bot.rest.remove_role_from_member(ctx.guild_id, ctx.author.id, HIKARI_STAFF_ROLE_ID, reason="Thommo is drunk again")
+        await ctx.bot.rest.remove_role_from_member(ctx.guild_id, THOMMO_ID, HIKARI_STAFF_ROLE_ID, reason="Thommo is drunk again")
         await ctx.respond("Action confirmed - thomm.o is now muted.")
-        ctx.bot.create_task(unmute_task(ctx.bot, ctx.author.id))
+        ctx.bot.create_task(unmute_task(ctx.bot, THOMMO_ID))
     else:
         await ctx.respond("Action cancelled.")
 
