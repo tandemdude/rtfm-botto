@@ -129,7 +129,7 @@ class RTFMManager:
             obj, self._rtfm_cache.keys(), scorer=fuzz.QRatio, limit=10
         )
 
-        e = hikari.Embed(colour=0x39393F)
+        e = hikari.Embed(colour=0x2F3136)
         if len(matches) == 0:
             return "Could not find anything. Sorry."
 
